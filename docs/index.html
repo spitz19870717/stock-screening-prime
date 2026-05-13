@@ -2,20 +2,362 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="株式レポート">
   <title>東証プライム 日次スクリーニングレポート</title>
   <style>
-    body { font-family: sans-serif; display: flex; justify-content: center;
-           align-items: center; height: 100vh; margin: 0; background: #f0f4f8; }
-    .box { text-align: center; color: #1a3a5c; }
-    h1 { font-size: 1.4rem; }
-    p { color: #6b7280; margin-top: 8px; }
-  </style>
+:root {
+  --primary: #1a3a5c;
+  --primary-light: #2c5282;
+  --green: #1a7a3c;
+  --green-bg: #e8f5ee;
+  --blue: #0055a5;
+  --blue-bg: #e6f0ff;
+  --red: #9a2020;
+  --red-bg: #fdecea;
+  --yellow: #9a6000;
+  --yellow-bg: #fff8e6;
+  --gray: #6b7280;
+  --card-bg: #ffffff;
+  --page-bg: #f0f4f8;
+  --text: #1f2937;
+  --border: #e5e7eb;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--page-bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #fff;
+  padding: 28px 20px 24px;
+}
+header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+.header-meta { font-size: 0.85rem; opacity: 0.85; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+.summary-section {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin: 20px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.summary-section h2 { font-size: 0.9rem; color: var(--gray); width: 100%; margin-bottom: 4px; }
+.condition-tag {
+  background: var(--blue-bg);
+  color: var(--blue);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ===== 指標の見方（グロッサリー） ===== */
+.glossary {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin: 8px 0;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.glossary summary {
+  padding: 14px 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.glossary summary::-webkit-details-marker { display: none; }
+.glossary summary::after {
+  content: " ▼";
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+.glossary[open] summary::after { content: " ▲"; }
+.gl-body {
+  padding: 0 20px 16px;
+  border-top: 1px solid var(--border);
+}
+.gl-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--page-bg);
+  font-size: 0.85rem;
+}
+.gl-row:last-child { border-bottom: none; }
+.gl-term {
+  font-weight: 700;
+  color: var(--primary);
+  padding-top: 1px;
+}
+.gl-desc { color: var(--text); line-height: 1.55; }
+.gl-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gray);
+  padding: 8px 0 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+@media (max-width: 480px) {
+  .gl-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+.result-count {
+  font-size: 0.9rem;
+  color: var(--gray);
+  margin: 12px 0 16px;
+  padding: 0 4px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+@media (min-width: 768px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-title-block { flex: 1; min-width: 0; }
+.stock-code {
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.stock-name-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 4px;
+}
+.stock-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.stock-price-hero {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.stock-sector {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--gray);
+  background: var(--page-bg);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.badge-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-excellent { background: var(--green-bg);  color: var(--green);  }
+.badge-good      { background: var(--blue-bg);   color: var(--blue);   }
+.badge-caution   { background: var(--yellow-bg); color: var(--yellow); }
+.badge-trending {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+.card-trending {
+  border: 2px solid #ffc107;
+  box-shadow: 0 2px 16px rgba(255,193,7,0.25);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+@media (max-width: 480px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+}
+
+.metric {
+  background: var(--page-bg);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.metric-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.metric-unit { font-size: 0.7rem; font-weight: 400; }
+.metric-label { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+
+.metric-green { background: var(--green-bg); }
+.metric-green .metric-value { color: var(--green); }
+.metric-blue  { background: var(--blue-bg); }
+.metric-blue  .metric-value { color: var(--blue); }
+.metric-red   { background: var(--red-bg); }
+.metric-red   .metric-value { color: var(--red); }
+
+.sub-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.82rem;
+  color: var(--gray);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--page-bg);
+  border-radius: 8px;
+}
+
+/* ===== グラフ ===== */
+.chart-section { margin-bottom: 14px; }
+.chart-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray);
+  margin-bottom: 6px;
+}
+.chart-change {
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-left: 6px;
+}
+.chart-wrapper {
+  width: 100%;
+  min-height: 220px;
+}
+
+.ai-comment {
+  background: #f5f7ff;
+  border-left: 4px solid #4a6fa5;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+}
+.ai-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.ai-comment p { font-size: 0.9rem; line-height: 1.65; }
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray);
+  font-size: 1rem;
+}
+
+footer {
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding: 24px 20px;
+  font-size: 0.82rem;
+  color: var(--gray);
+  line-height: 1.7;
+}
+.footer-disclaimer { margin-bottom: 8px; }
+</style>
 </head>
 <body>
-  <div class="box">
+
+<header>
+  <div class="container">
     <h1>📊 東証プライム 日次スクリーニングレポート</h1>
-    <p>初回レポートは毎朝9時台に自動生成されます。<br>しばらくお待ちください。</p>
+    <p class="header-meta">最終更新: 2026年05月13日 20:21 JST ／ 対象: 東証プライム（1575銘柄）</p>
   </div>
+</header>
+
+<main class="container">
+
+  <div class="summary-section">
+    <h2>スクリーニング条件</h2>
+    <span class="condition-tag">配当利回り 2%以上</span>
+    <span class="condition-tag">PER 20倍以下</span>
+    <span class="condition-tag">ROE 10%以上</span>
+    <span class="condition-tag">株価安い順 全件表示</span>
+  </div>
+
+  <details class="glossary"><summary>📖 指標・チャートの見方（タップで開く）</summary><div class="gl-body"><div class="gl-section-title">📊 財務指標</div><div class="gl-row"><span class="gl-term">配当利回り</span><span class="gl-desc">株価に対する年間配当の割合。高いほど配当収入が多い。3%以上が魅力的な水準。</span></div><div class="gl-row"><span class="gl-term">PER</span><span class="gl-desc">株価 ÷ 1株利益。低いほど割安。20倍以下が目安で、12倍以下はさらに割安（緑色）。</span></div><div class="gl-row"><span class="gl-term">ROE</span><span class="gl-desc">自己資金をどれだけ効率よく使って利益を上げているか。10%以上が優良企業の目安（青色）、15%以上が特に優秀（緑色）。</span></div><div class="gl-row"><span class="gl-term">PBR</span><span class="gl-desc">株価 ÷ 1株純資産。1倍以下は「会社を解散しても損がない」割安水準の目安（緑色）。</span></div><div class="gl-row"><span class="gl-term">配当性向</span><span class="gl-desc">利益のうち何%を配当に回しているか。30〜60%が安定的。80%超は将来の減配リスクあり。</span></div><div class="gl-row"><span class="gl-term">自己資本比率</span><span class="gl-desc">総資産に占める自己資金の割合。40%以上が安全な水準。低いほど借金への依存度が高い。</span></div><div class="gl-row"><span class="gl-term">時価総額</span><span class="gl-desc">会社全体の価値（株価 × 発行株数）。大きいほど財務の安定性が高い傾向がある。</span></div><div class="gl-section-title" style="margin-top:12px">📈 チャートの見方</div><div class="gl-row"><span class="gl-term">ローソク足</span><span class="gl-desc">緑色（陽線）＝その月の終値が始値より高い（上昇）。赤色（陰線）＝終値が始値より低い（下落）。縦線が高値・安値の範囲を示す。</span></div><div class="gl-row"><span class="gl-term">移動平均線（MA）</span><span class="gl-desc">過去N期間の終値の平均を結んだ線。株価の大まかなトレンドを把握するために使う。オレンジ＝6ヶ月、青＝12ヶ月。</span></div><div class="gl-row"><span class="gl-term">ゴールデンクロス</span><span class="gl-desc">短期線（オレンジ）が長期線（青）を下から上に突き抜けた時。上昇トレンドへの転換サインとされる。</span></div><div class="gl-row"><span class="gl-term">デッドクロス</span><span class="gl-desc">短期線（オレンジ）が長期線（青）を上から下に突き抜けた時。下落トレンドへの転換サインとされる。</span></div><div class="gl-row"><span class="gl-term">↑ 上昇トレンドマーク</span><span class="gl-desc">直近の株価が6ヶ月MAを上回り、かつ6ヶ月MAが12ヶ月MAを上回っている銘柄に表示。買いを検討しやすいタイミングの目安。</span></div></div></details>
+
+  <p class="result-count">0件（条件一致なし）</p>
+
+  <div class="no-results">今日は条件に合う銘柄がありませんでした。<br>明日のレポートをお待ちください。</div>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p class="footer-disclaimer">
+      ⚠️ このレポートは情報提供を目的としており、特定の銘柄への投資を推奨するものではありません。
+      投資の最終判断はご自身の責任で行ってください。株式投資には元本割れのリスクがあります。
+    </p>
+    <p>株主優待情報は変更・廃止される場合があります。最新情報は各社のIRページでご確認ください。</p>
+    <p>次回更新予定: 2026年05月14日 9:10 ／ データ取得元: Yahoo Finance（yfinance）</p>
+  </div>
+</footer>
+
+
 </body>
 </html>
