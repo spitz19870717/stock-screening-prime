@@ -310,28 +310,24 @@ def run_screening(codes=None, verbose=True):
 
     total = len(codes)
     if verbose:
-        print(f"東証プライム全{total}銘柄をスキャン中（並列処理・5スレッド）...")
+        print(f"東証プライム全{total}銘柄をスキャン中（順次処理）...")
 
     results = []
-    done_count = [0]
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(_screen_one, code): code for code in codes}
-        for future in as_completed(futures):
-            done_count[0] += 1
-            if verbose and done_count[0] % 200 == 0:
-                print(f"  進捗: {done_count[0]}/{total}")
-            result = future.result()
-            if result:
-                results.append(result)
+    for i, code in enumerate(codes):
+        if verbose and (i + 1) % 100 == 0:
+            print(f"  進捗: {i+1}/{total}")
+        result = _screen_one(code)
+        if result:
+            results.append(result)
 
     results.sort(key=lambda x: x["price"])
 
     if verbose:
         print(f"追加データ取得中（{len(results)}銘柄）...")
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        results = list(executor.map(_fetch_extra, results))
+    for stock in results:
+        _fetch_extra(stock)
 
     if verbose:
         print(f"スキャン完了。条件一致: {len(results)}件（全件表示）")
