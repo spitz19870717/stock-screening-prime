@@ -7,6 +7,7 @@
 import yfinance as yf
 import warnings
 import io
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 warnings.filterwarnings('ignore')
 
@@ -199,8 +200,11 @@ def _calc_yield(info, price):
 
 def _screen_one(code):
     """1銘柄をスクリーニングし、条件を満たせばdictを返す"""
+    time.sleep(0.5)  # レート制限対策
     try:
         info = yf.Ticker(code).info
+        if not info or len(info) < 5:
+            return None
         price = (info.get("currentPrice")
                  or info.get("regularMarketPrice")
                  or info.get("previousClose"))
