@@ -1,0 +1,38 @@
+name: 東証プライム 日次スクリーニングレポート生成
+
+on:
+  schedule:
+    - cron: '13 0 * * *'   # UTC 0:13 = JST 9:13（本命）
+    - cron: '37 0 * * *'   # UTC 0:37 = JST 9:37（1次バックアップ）
+    - cron: '17 1 * * *'   # UTC 1:17 = JST 10:17（2次バックアップ）
+  workflow_dispatch:        # GitHubの画面から手動実行も可能
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 依存ライブラリをインストール
+        run: pip install -r requirements.txt
+
+      - name: スクリーニング＆レポート生成
+        run: python main.py
+
+      - name: docs/index.html をコミット・プッシュ
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/index.html
+          git diff --staged --quiet || git commit -m "日次レポート更新: $(date +'%Y-%m-%d')"
+          git push
